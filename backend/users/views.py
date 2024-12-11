@@ -46,15 +46,11 @@ class LogoutView(APIView):
 class ProfileView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
     def get(self, request):
         try:
             user_profile = request.user.userprofile
             profile_data = UserProfileSerializer(user_profile).data
-            return Response({
-                "email": request.user.email,
-                "profile": profile_data
-            }, status=HTTP_200_OK)
+            return Response({"email": request.user.email, "profile": profile_data}, status=HTTP_200_OK)
         except UserProfile.DoesNotExist:
             return Response({"error": "User profile not found"}, status=HTTP_404_NOT_FOUND)
         except Exception as e:

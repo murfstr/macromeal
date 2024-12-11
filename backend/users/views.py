@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_200_OK
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
-from .serializers import SignUpSerializer
+from .serializers import SignUpSerializer, UserProfileSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from .models import UserProfile
 
 class SignUpView(APIView):
     def post(self, request):
@@ -25,15 +26,12 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
-        try:
-            user = authenticate(username=email, password=password)
-            if user:
-                token, _ = Token.objects.get_or_create(user=user)
-                return Response({"token": token.key}, status=HTTP_200_OK)
-            else:
-                return Response({"error": "Invalid credentials"}, status=HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"error": str(e)}, status=HTTP_400_BAD_REQUEST)
+        user = authenticate(username=email, password=password)
+        if user:
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key}, status=HTTP_200_OK)
+        else:
+            return Response({"error": "Invalid credentials"}, status=HTTP_404_NOT_FOUND)
 
 class LogoutView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -48,8 +46,16 @@ class LogoutView(APIView):
 class ProfileView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
         try:
-            return Response({"email": request.user.email}, status=HTTP_200_OK)
+            user_profile = request.user.userprofile
+            profile_data = UserProfileSerializer(user_profile).data
+            return Response({
+                "email": request.user.email,
+                "profile": profile_data
+            }, status=HTTP_200_OK)
+        except UserProfile.DoesNotExist:
+            return Response({"error": "User profile not found"}, status=HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=HTTP_400_BAD_REQUEST)

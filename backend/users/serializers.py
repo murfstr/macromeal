@@ -9,9 +9,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class SignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(required=True)
+
     class Meta:
         model = User
         fields = ['email', 'password']
+
     def create(self, validated_data):
         email = validated_data['email']
         password = validated_data['password']

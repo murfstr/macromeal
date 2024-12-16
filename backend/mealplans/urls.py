@@ -1,7 +1,7 @@
-from rest_framework.routers import DefaultRouter
-from .views import MealPlanViewSet
+from django.urls import path
+from .views import mealplans_list_create, mealplans_detail
 
-router = DefaultRouter()
-router.register('', MealPlanViewSet, basename='mealplan')
-
-urlpatterns = router.urls
+urlpatterns = [
+    path('', mealplans_list_create, name='mealplans_list_create'),
+    path('<int:pk>/', mealplans_detail, name='mealplans_detail'),
+]

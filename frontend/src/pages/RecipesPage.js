@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchRecipes, createRecipe, searchSpoonacular, analyzeNutritionix } from '../services/api';
+import NavBar from '../components/NavBar';
 
 function RecipesPage() {
   const [recipes, setRecipes] = useState([]);
@@ -39,6 +40,7 @@ function RecipesPage() {
 
   return (
     <div>
+      <NavBar />
       <h1>Recipes</h1>
       <ul>
         {recipes.map(r => (

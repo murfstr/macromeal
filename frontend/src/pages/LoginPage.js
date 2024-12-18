@@ -12,7 +12,7 @@ function LoginPage() {
     try {
       const data = await loginUser(email, password);
       setAuthToken(data.token);
-      navigate('/mealplans');
+      navigate('/');
     } catch (error) {
       alert('Invalid credentials');
     }

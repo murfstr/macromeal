@@ -1,7 +1,7 @@
 // src/services/api.js
 import axios from 'axios';
 
-const baseURL = 'http://127.0.0.1:8000/api';
+const baseURL = 'http://127.0.0.1:8000/api/v1';
 
 // Create an Axios instance
 const api = axios.create({
@@ -9,30 +9,45 @@ const api = axios.create({
 });
 
 // Function to set token in the Authorization header
-export const setAuthToken = (token) => {
+export const setAuthToken = (token, email) => {
   if (token) {
     api.defaults.headers.common['Authorization'] = `Token ${token}`;
     localStorage.setItem('token', token);
+    if (email) {
+      localStorage.setItem('email', email);
+    }
   } else {
     delete api.defaults.headers.common['Authorization'];
     localStorage.removeItem('token');
+    localStorage.removeItem('email');
   }
 };
 
-// Check if there's a token in localStorage when app starts
+// Check if there's a token with email in localStorage when app starts
 const storedToken = localStorage.getItem('token');
+const storedEmail = localStorage.getItem('email');
 if (storedToken) {
-  setAuthToken(storedToken);
+  setAuthToken(storedToken, storedEmail);
 }
 
 // Auth endpoints
-export const loginUser = async (email, password) => {
-  const response = await api.post('/users/login/', { email, password });
-  return response.data;
+export const signupUser = async (email, password) => {
+  try {
+    const response = await axios.post(`${baseURL}/users/signup/`, {email, password});
+    const { token } = response.data;
+    setAuthToken(token, email);
+    return response.data;
+  } catch (error) {
+    console.error("Signup error:", error.response || error.message);
+    throw new Error(error.response?.data?.detail || "Failed to sign up");
+  }
 };
 
-export const signupUser = async (email, password) => {
-  const response = await api.post('/users/signup/', { email, password });
+
+export const loginUser = async (email, password) => {
+  const response = await api.post('/users/login/', { email, password });
+  const { token } = response.data;
+  setAuthToken(token, email);
   return response.data;
 };
 

@@ -6,10 +6,11 @@ from django.contrib.auth.models import User
 from .serializers import SignUpSerializer, UserProfileSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import UserProfile
 
 class SignUpView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
         if serializer.is_valid():
@@ -23,6 +24,7 @@ class SignUpView(APIView):
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')

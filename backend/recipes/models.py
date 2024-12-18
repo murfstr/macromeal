@@ -3,7 +3,7 @@ from django.db import models
 class Recipe(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    calories = models.IntegerField()
+    calories = models.IntegerField(default=2000)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -5,18 +5,18 @@ import SignupPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
 import MealPlansPage from './pages/MealPlansPage';
 import RecipesPage from './pages/RecipesPage';
-import HomePage from './pages/HomePage'; // Import the new HomePage
+import HomePage from './pages/HomePage';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/mealplans" element={<MealPlansPage />} />
         <Route path="/recipes" element={<RecipesPage />} />
-        <Route path="/" element={<HomePage />} />  {/* Home Page route */}
+        <Route path="/homepage" element={<HomePage />} />
       </Routes>
     </Router>
   );

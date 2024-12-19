@@ -6,13 +6,13 @@ function NavBar() {
   const navigate = useNavigate();
   
   const handleLogout = () => {
-    logoutUser(); // clears token and email from localStorage
-    navigate('/login'); // redirect to login page after logout
+    logoutUser();
+    navigate('/');
   };
 
   return (
     <nav style={{ background: '#f0f0f0', padding: '10px' }}>
-      <Link to="/" style={{ margin: '0 10px' }}>Home</Link>
+      <Link to="/homepage" style={{ margin: '0 10px' }}>Home</Link>
       <Link to="/mealplans" style={{ margin: '0 10px' }}>Meal Plans</Link>
       <Link to="/profile" style={{ margin: '0 10px' }}>Profile</Link>
       <Link to="/recipes" style={{ margin: '0 10px' }}>Recipes</Link>

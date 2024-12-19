@@ -57,9 +57,16 @@ export const logoutUser = () => {
 
 // Protected endpoints
 export const getProfile = async () => {
-  const response = await api.get('/users/profile/');
-  return response.data;
+  try {
+    const response = await api.get('/users/profile/');
+    console.log('Profile data:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching profile:', error.response || error.message);
+    throw error;
+  }
 };
+
 
 // Mealplans
 export const fetchMealPlans = async () => {
@@ -91,5 +98,20 @@ export const searchSpoonacular = async (query) => {
 
 export const analyzeNutritionix = async (foodText) => {
   const response = await api.post('/integrations/nutritionix/', { food_text: foodText });
+  return response.data;
+};
+
+export const fetchIngredients = async () => {
+  const response = await api.get('/recipes/ingredients/');
+  return response.data;
+};
+
+export const createIngredient = async (data) => {
+  const response = await api.post('/recipes/add_ingredient/', data);
+  return response.data;
+};
+
+export const addIngredientByName = async (name) => {
+  const response = await api.post('/recipes/add_ingredient/', { name });
   return response.data;
 };

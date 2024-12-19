@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
-from .services.api_clients import fetch_recipes_from_spoonacular, fetch_random_spoonacular_recipes, fetch_nutritionix_data
+from .services.api_clients import fetch_recipes_from_spoonacular, fetch_random_spoonacular_recipes, fetch_ingredient_data
 
 class SpoonacularSearchView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -27,5 +27,5 @@ class NutritionixView(APIView):
 
     def post(self, request):
         food_text = request.data.get('food_text', '')
-        data = fetch_nutritionix_data(food_text)
+        data = fetch_ingredient_data(food_text)
         return Response(data)

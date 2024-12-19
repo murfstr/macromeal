@@ -36,7 +36,12 @@ REST_FRAMEWORK = {
     ],
 }
 
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+NUTRITIONIX_APP_ID = os.getenv('NUTRITIONIX_APP_ID')
+NUTRITIONIX_APP_KEY = os.getenv('NUTRITIONIX_APP_KEY')
 
 # Application definition
 

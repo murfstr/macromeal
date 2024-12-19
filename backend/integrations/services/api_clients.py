@@ -23,16 +23,14 @@ def fetch_random_spoonacular_recipes():
     response.raise_for_status()
     return response.json()
 
-def fetch_nutritionix_data(food_text):
+def fetch_ingredient_data(query):
     url = "https://trackapi.nutritionix.com/v2/natural/nutrients"
     headers = {
         "x-app-id": settings.NUTRITIONIX_APP_ID,
         "x-app-key": settings.NUTRITIONIX_APP_KEY,
         "Content-Type": "application/json"
     }
-    data = {
-        "query": food_text
-    }
+    data = {"query": query}
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
     return response.json()

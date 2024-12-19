@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getProfile } from '../services/api';
 import NavBar from '../components/NavBar';
+import { getProfile } from '../services/api';
 
 function ProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -17,14 +17,17 @@ function ProfilePage() {
     fetchProfile();
   }, []);
 
-  if (!profile) return <div>Loading...</div>;
+  if (!profile) return <div><NavBar /><p>Loading profile...</p></div>;
+
   return (
     <div>
       <NavBar />
-      <h1>Profile</h1>
-      <p>Email: {profile.email}</p>
-      <p>Calorie Target: {profile.profile.calorie_target}</p>
-      <p>Dietary Restrictions: {profile.profile.dietary_restrictions || 'None'}</p>
+      <div style={{ padding: '20px' }}>
+        <h1>Your Profile</h1>
+        <p>Email: {profile.email}</p>
+        <p>Calorie Target: {profile.profile.calorie_target}</p>
+        <p>Dietary Restrictions: {profile.profile.dietary_restrictions || 'None'}</p>
+      </div>
     </div>
   );
 }

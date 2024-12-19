@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from .models import MealPlan
 from .serializers import MealPlanSerializer
 
@@ -11,14 +11,15 @@ from .serializers import MealPlanSerializer
 @permission_classes([IsAuthenticated])
 def mealplans_list_create(request):
     if request.method == 'GET':
-        # List all meal plans for the authenticated user
         mealplans = MealPlan.objects.filter(user=request.user)
-        serializer = MealPlanSerializer(mealplans, many=True)
+        # Pass context to serializer
+        serializer = MealPlanSerializer(mealplans, many=True, context={'request': request})
         return Response(serializer.data, status=HTTP_200_OK)
     
     elif request.method == 'POST':
         # Create a new meal plan for the authenticated user
-        serializer = MealPlanSerializer(data=request.data)
+        # Pass context so serializer can access request.user
+        serializer = MealPlanSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=HTTP_201_CREATED)
@@ -34,18 +35,18 @@ def mealplans_detail(request, pk):
         return Response({"detail": "Not found."}, status=HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = MealPlanSerializer(mealplan)
+        # Pass context
+        serializer = MealPlanSerializer(mealplan, context={'request': request})
         return Response(serializer.data, status=HTTP_200_OK)
 
     elif request.method == 'PUT':
-        # Update an existing meal plan
-        serializer = MealPlanSerializer(mealplan, data=request.data)
+        # Pass context for updates
+        serializer = MealPlanSerializer(mealplan, data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     elif request.method == 'DELETE':
-        # Delete the meal plan
         mealplan.delete()
         return Response(status=HTTP_204_NO_CONTENT)

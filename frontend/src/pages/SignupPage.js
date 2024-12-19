@@ -12,7 +12,7 @@ function SignupPage() {
     try {
       const data = await signupUser(email, password);
       setAuthToken(data.token);
-      navigate('/');
+      navigate('/homepage');
     } catch (error) {
       alert('Error signing up');
     }
@@ -28,36 +28,11 @@ function SignupPage() {
                onChange={(e)=>setPassword(e.target.value)}/>
         <button type="submit">Sign Up</button>
       </form>
+      <p>
+        Already have an account? <a href="/">Login</a>
+      </p>
     </div>
   );
 }
 
 export default SignupPage;
-
-// export const signIn = async (email, password) => {
-//   let response = await api.post("users/login/", {
-//       email: email,
-//       password: password,
-//   });
-//   if (response.status === 200) {
-//       let { user, token } = response.data;
-//       localStorage.setItem("token", token);
-//       api.defaults.headers.common["Authorization"] = `Token ${token}`;
-//       return user;
-//   }
-//   alert("credentials failed");
-//   return null;
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     try {
-//         if (isSignUp) {
-//             setUser(await signUp(email, password));
-//         } else {
-//             setUser(await signIn(email, password));
-//         }
-//     } catch (error) {
-//         console.error(isSignUp ? "Sign-up failed" : "Sign-in failed", error);
-//     }
-// };

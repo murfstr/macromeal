@@ -7,7 +7,10 @@ function HomePage() {
       <NavBar />
       <div style={{ padding: '20px' }}>
         <h1>Welcome to Macromeal</h1>
-        <p>Use the navigation above to manage your meal plans, view your profile, and create recipes.</p>
+        <p>
+          Use the navigation above to manage your meal plans, view your profile,
+          and create recipes. You can also log out at any time.
+        </p>
       </div>
     </div>
   );

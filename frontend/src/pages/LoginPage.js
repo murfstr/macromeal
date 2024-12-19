@@ -12,7 +12,7 @@ function LoginPage() {
     try {
       const data = await loginUser(email, password);
       setAuthToken(data.token);
-      navigate('/');
+      navigate('/homepage');
     } catch (error) {
       alert('Invalid credentials');
     }
@@ -28,6 +28,9 @@ function LoginPage() {
                onChange={(e)=>setPassword(e.target.value)}/>
         <button type="submit">Login</button>
       </form>
+      <p>
+        Don't have an account? <a href="/signup">Sign up</a>
+      </p>
     </div>
   );
 }

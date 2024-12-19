@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/v1/mealplans/', include('mealplans.urls')),
     path('api/v1/recipes/', include('recipes.urls')),
     path('api/v1/integrations/', include('integrations.urls')),
+    # path('api/v1/ingredients/', include('ingredients.urls')),
 ]

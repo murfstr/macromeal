@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from '../components/NavBar';
-import { fetchMealPlans, createMealPlan, fetchRecipes } from '../services/api';
+import MealPlanCard from '../components/MealPlanCard';
+import {
+  fetchMealPlans,
+  createMealPlan,
+  fetchRecipes,
+  deleteMealPlan,
+  generateRandomMealPlan,
+} from '../services/api';
 
 function MealPlansPage() {
   const [mealplans, setMealplans] = useState([]);
@@ -11,94 +18,154 @@ function MealPlansPage() {
   const [selectedDate, setSelectedDate] = useState('');
 
   useEffect(() => {
-    async function loadData() {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
       const mpData = await fetchMealPlans();
       setMealplans(mpData);
       const rData = await fetchRecipes();
       setRecipes(rData);
-    }
-    loadData();
-  }, []);
-
-  const toggleRecipeSelection = (id) => {
-    if (selectedRecipeIds.includes(id)) {
-      setSelectedRecipeIds(selectedRecipeIds.filter(rid => rid !== id));
-    } else {
-      setSelectedRecipeIds([...selectedRecipeIds, id]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      alert('Failed to load meal plans or recipes.');
     }
   };
 
+  // Toggle recipe ID in selectedRecipeIds
+  const toggleRecipeSelection = (id) => {
+    if (selectedRecipeIds.includes(id)) {
+      setSelectedRecipeIds((prev) => prev.filter((rid) => rid !== id));
+    } else {
+      setSelectedRecipeIds((prev) => [...prev, id]);
+    }
+  };
+
+  // Create a meal plan manually
   const handleCreate = async () => {
     if (!selectedDate) {
       alert('Please select a date for the meal plan day.');
       return;
     }
-
     const data = {
       name,
       daily_calorie_goal: parseInt(goal, 10),
       days: [
         {
           date: selectedDate,
-          recipe_ids: selectedRecipeIds
-        }
-      ]
+          recipe_ids: selectedRecipeIds,
+        },
+      ],
     };
-
     try {
       const newMP = await createMealPlan(data);
-      setMealplans([...mealplans, newMP]);
+      setMealplans((prev) => [...prev, newMP]);
+      // Reset form
       setName('');
       setGoal(2000);
       setSelectedDate('');
       setSelectedRecipeIds([]);
     } catch (error) {
-      console.error(error);
-      alert('Error creating meal plan');
+      console.error('Error creating meal plan:', error);
+      alert('Error creating meal plan.');
+    }
+  };
+
+  // Optional: Delete meal plan
+  const handleDeleteMealPlan = async (id) => {
+    if (!window.confirm('Really delete this meal plan?')) return;
+    try {
+      await deleteMealPlan(id);
+      setMealplans((prev) => prev.filter((mp) => mp.id !== id));
+    } catch (error) {
+      console.error('Error deleting meal plan:', error);
+      alert('Failed to delete meal plan.');
+    }
+  };
+
+  // Generate random meal plan from Spoonacular
+  const handleRandomMealPlan = async () => {
+    const count = 3; // Number of random recipes
+    try {
+      const newMP = await generateRandomMealPlan(count);
+      setMealplans((prev) => [...prev, newMP]);
+    } catch (error) {
+      console.error('Error generating random meal plan:', error);
+      alert('Failed to generate random meal plan.');
     }
   };
 
   return (
     <div>
       <NavBar />
-      <div style={{ padding: '20px' }}>
+
+      <div className="container mt-4">
         <h1>Meal Plans</h1>
-        <ul>
-          {mealplans.map(mp => (
-            <li key={mp.id}>
-              {mp.name} - {mp.daily_calorie_goal} cal/day
-              {mp.days && mp.days.map(day => (
-                <div key={day.id}>
-                  Date: {day.date} | Recipes: {day.recipes.map(r => r.name).join(', ')}
-                </div>
-              ))}
-            </li>
+
+        {/* Generate Random Meal Plan Button */}
+        <button className="btn btn-secondary mb-3" onClick={handleRandomMealPlan}>
+          <i className="fas fa-random me-2"></i> Generate Random Meal Plan
+        </button>
+
+        {/* Meal Plans Display */}
+        <div className="row">
+          {mealplans.map((mp) => (
+            <div className="col-md-4" key={mp.id}>
+              <MealPlanCard mealplan={mp} onDelete={handleDeleteMealPlan} />
+            </div>
           ))}
-        </ul>
+        </div>
 
+        <hr />
         <h2>Create New Meal Plan</h2>
-        <input placeholder="Name" value={name} onChange={e=>setName(e.target.value)} />
-        <input type="number" placeholder="Goal" value={goal} onChange={e=>setGoal(e.target.value)} />
-        <h3>Pick a date for the meal plan day</h3>
-        <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} />
-
-        <h3>Select Recipes for that day</h3>
-        <ul>
-          {recipes.map(r => (
-            <li key={r.id}>
+        <div className="mb-3">
+          <label className="form-label">Name</label>
+          <input
+            className="form-control"
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Daily Calorie Goal</label>
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Goal"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Date for Meal Plan Day</label>
+          <input
+            type="date"
+            className="form-control"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+        </div>
+        <h4>Select Recipes for That Day</h4>
+        <ul className="list-group mb-3">
+          {recipes.map((r) => (
+            <li key={r.id} className="list-group-item">
               <label>
-                <input 
+                <input
                   type="checkbox"
+                  className="form-check-input me-1"
                   checked={selectedRecipeIds.includes(r.id)}
                   onChange={() => toggleRecipeSelection(r.id)}
                 />
-                {r.name} ({r.calories} cal)
+                {r.name}
               </label>
             </li>
           ))}
         </ul>
-
-        <button onClick={handleCreate}>Create Meal Plan</button>
+        <button className="btn btn-primary" onClick={handleCreate}>
+          Create Meal Plan
+        </button>
       </div>
     </div>
   );

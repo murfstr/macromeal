@@ -79,6 +79,16 @@ export const createMealPlan = async (data) => {
   return response.data;
 };
 
+export const deleteMealPlan = async (mealplanId) => {
+  const response = await api.delete(`/mealplans/${mealplanId}/`);
+  return response.data;
+};
+
+export const generateRandomMealPlan = async (count = 3) => {
+  const response = await api.post('/mealplans/random/', { count });
+  return response.data;
+}
+
 // Recipes
 export const fetchRecipes = async () => {
   const response = await api.get('/recipes/');
@@ -92,7 +102,7 @@ export const createRecipe = async (data) => {
 
 // Integrations
 export const searchSpoonacular = async (query) => {
-  const response = await api.get(`/integrations/spoonacular/search/?query=${query}`);
+  const response = await api.get(`/integrations/spoonacular/search/?query=${query}/`);
   return response.data;
 };
 
@@ -115,3 +125,13 @@ export const addIngredientByName = async (name) => {
   const response = await api.post('/recipes/add_ingredient/', { name });
   return response.data;
 };
+
+export const deleteIngredient = async (ingredientId) => {
+  const response = await api.delete(`/recipes/ingredients/${ingredientId}/`);
+  return response.data; 
+};
+
+export const deleteRecipe = async (recipeId) => {
+  const response = await api.delete(`/recipes/${recipeId}/`);
+  return response.data;
+}

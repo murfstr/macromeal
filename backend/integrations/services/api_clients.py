@@ -13,15 +13,16 @@ def fetch_recipes_from_spoonacular(query):
     response.raise_for_status()
     return response.json()
 
-def fetch_random_spoonacular_recipes():
+def fetch_random_spoonacular_recipes(count=3):
     url = "https://api.spoonacular.com/recipes/random"
     params = {
-        "apiKey": settings.SPOONACULAR_API_KEY,
-        "number": 3
+        "number": count,
+        "apiKey": settings.SPOONACULAR_API_KEY
     }
     response = requests.get(url, params=params)
     response.raise_for_status()
-    return response.json()
+    data = response.json()
+    return data.get("recipes", [])
 
 def fetch_ingredient_data(query):
     url = "https://trackapi.nutritionix.com/v2/natural/nutrients"

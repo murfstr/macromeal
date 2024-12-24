@@ -1,12 +1,11 @@
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 from .models import Recipe, Ingredient
 from .serializers import RecipeSerializer, IngredientSerializer
 from integrations.services.api_clients import fetch_ingredient_data
-
 
 @api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication])
@@ -26,8 +25,8 @@ def recipes_list_create(request):
         
         serializer = RecipeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=HTTP_201_CREATED)
+            recipe = serializer.save()
+            return Response(RecipeSerializer(recipe, context={'request': request}).data, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -45,16 +44,14 @@ def recipes_detail(request, pk):
     elif request.method == 'PUT':
         if not request.user.is_authenticated:
             return Response({"detail": "Authentication required."}, status=HTTP_403_FORBIDDEN)
-
         serializer = RecipeSerializer(recipe, data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=HTTP_200_OK)
+            updated_recipe = serializer.save()
+            return Response(RecipeSerializer(updated_recipe, context={'request': request}).data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
     elif request.method == 'DELETE':
         if not request.user.is_authenticated:
             return Response({"detail": "Authentication required."}, status=HTTP_403_FORBIDDEN)
-
         recipe.delete()
         return Response(status=HTTP_204_NO_CONTENT)
 
@@ -62,6 +59,10 @@ def recipes_detail(request, pk):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def ingredients_list_create(request):
+    """
+    GET -> List all ingredients
+    POST -> Create a new ingredient by specifying name, calories, etc.
+    """
     if request.method == 'GET':
         ingredients = Ingredient.objects.all()
         serializer = IngredientSerializer(ingredients, many=True)
@@ -73,19 +74,35 @@ def ingredients_list_create(request):
             return Response(IngredientSerializer(ingredient).data, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
+@api_view(['DELETE'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def delete_ingredient(request, pk):
+    """
+    DELETE /api/v1/recipes/ingredients/<pk> -> Remove ingredient from DB
+    """
+    try:
+        ingredient = Ingredient.objects.get(pk=pk)
+    except Ingredient.DoesNotExist:
+        return Response({"detail": "Not found."}, status=HTTP_404_NOT_FOUND)
+    # Optional: If you want to restrict deletion only to owners or if ingredient is not in use, add logic
+    ingredient.delete()
+    return Response(status=HTTP_204_NO_CONTENT)
+
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def add_ingredient_by_name(request):
+    """
+    POST -> Takes {'name': 'chicken'} -> uses Nutritionix to fetch data -> returns newly created ingredient
+    """
     name = request.data.get('name')
     if not name:
         return Response({"detail": "No ingredient name provided."}, status=HTTP_400_BAD_REQUEST)
     try:
-        nutri_data = fetch_ingredient_data(name)
+        nutri_data = fetch_ingredient_data(name)  # calls your integrations function
         food = nutri_data['foods'][0]
-        ingredient_obj, created = Ingredient.objects.get_or_create(
-            name=food['food_name']
-        )
+        ingredient_obj, _ = Ingredient.objects.get_or_create(name=food['food_name'])
         ingredient_obj.calories = int(food.get('nf_calories', 0))
         ingredient_obj.save()
 

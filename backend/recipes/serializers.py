@@ -24,27 +24,69 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'created_at']
 
     def create(self, validated_data):
+        """
+        Create a new recipe and its related RecipeIngredient records.
+        """
         recipe_ingredients_data = validated_data.pop('recipe_ingredients', [])
         recipe = Recipe.objects.create(user=self.context['request'].user, **validated_data)
 
-        # Handle recipe ingredients
-        for ri_data in recipe_ingredients_data:
-            ingredient_id = ri_data.pop('ingredient_id')
-            ingredient = Ingredient.objects.get(id=ingredient_id)
+        errors = {}
+        used_ingredient_ids = set()
+        for index, ri_data in enumerate(recipe_ingredients_data):
+            ingredient_id = ri_data.pop('ingredient_id', None)
+            if ingredient_id in used_ingredient_ids:
+                errors[f"recipe_ingredients[{index}].ingredient_id"] = f"Duplicate ingredient_id {ingredient_id} in this recipe."
+                continue
+            used_ingredient_ids.add(ingredient_id)
+
+            try:
+                ingredient = Ingredient.objects.get(id=ingredient_id)
+            except Ingredient.DoesNotExist:
+                errors[f"recipe_ingredients[{index}].ingredient_id"] = f"Ingredient with id {ingredient_id} does not exist."
+                continue
+
             RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient, **ri_data)
+
+        # If we encountered any validation errors above, raise them
+        if errors:
+            # Optionally delete the partially created recipe if you want strict atomic behavior
+            # recipe.delete()
+            raise serializers.ValidationError(errors)
 
         return recipe
 
     def update(self, instance, validated_data):
+        """
+        Replace the existing recipe_ingredients with new data (if provided).
+        """
         recipe_ingredients_data = validated_data.pop('recipe_ingredients', None)
         instance = super().update(instance, validated_data)
 
         if recipe_ingredients_data is not None:
-            # Clear and rebuild recipe ingredients or update them
             instance.recipe_ingredients.all().delete()
-            for ri_data in recipe_ingredients_data:
-                ingredient_id = ri_data.pop('ingredient_id')
-                ingredient = Ingredient.objects.get(id=ingredient_id)
-                RecipeIngredient.objects.create(recipe=instance, ingredient=ingredient, **ri_data)
+
+            errors = {}
+            used_ingredient_ids = set()
+            for index, ri_data in enumerate(recipe_ingredients_data):
+                ingredient_id = ri_data.pop('ingredient_id', None)
+                if ingredient_id in used_ingredient_ids:
+                    errors[f"recipe_ingredients[{index}].ingredient_id"] = f"Duplicate ingredient_id {ingredient_id} in this recipe."
+                    continue
+                used_ingredient_ids.add(ingredient_id)
+
+                try:
+                    ingredient = Ingredient.objects.get(id=ingredient_id)
+                except Ingredient.DoesNotExist:
+                    errors[f"recipe_ingredients[{index}].ingredient_id"] = f"Ingredient with id {ingredient_id} does not exist."
+                    continue
+
+                RecipeIngredient.objects.create(
+                    recipe=instance,
+                    ingredient=ingredient,
+                    **ri_data
+                )
+
+            if errors:
+                raise serializers.ValidationError(errors)
 
         return instance

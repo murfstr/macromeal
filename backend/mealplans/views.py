@@ -91,6 +91,7 @@ def random_mealplan(request):
             # Get or create the Recipe
             recipe, created = Recipe.objects.get_or_create(
                 name=recipe_data['title'],
+                user=request.user,
                 defaults={
                     "description": recipe_data.get('summary', 'No description provided.'),
                     "calories": calculate_calories(recipe_data),

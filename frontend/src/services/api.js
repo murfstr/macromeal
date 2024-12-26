@@ -75,24 +75,53 @@ export const fetchMealPlans = async () => {
 };
 
 export const createMealPlan = async (data) => {
-  const response = await api.post('/mealplans/', data);
+  try {
+    const response = await api.post('/mealplans/', data);
+    return response.data;
+  } catch (error) {
+    console.error("Create Meal Plan error:", error.response || error.message);
+    throw new Error(error.response?.data?.detail || "Failed to create meal plan");
+  }
+};
+
+export const deleteMealPlan = async (id) => {
+  const response = await api.delete(`/mealplans/${id}/`);
   return response.data;
 };
 
-export const deleteMealPlan = async (mealplanId) => {
-  const response = await api.delete(`/mealplans/${mealplanId}/`);
-  return response.data;
-};
-
-export const generateRandomMealPlan = async (count = 3) => {
-  const response = await api.post('/mealplans/random/', { count });
-  return response.data;
+export const generateRandomMealPlan = async () => {
+  try {
+    const response = await api.post('/mealplans/random/', {});
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }
+
+export const updateMealPlan = async (id, data) => {
+  const response = await api.put(`/mealplans/${id}/`, data);
+  return response.data;
+};
+
+export const patchMealPlan = async (id, data) => {
+  const response = await api.patch(`/mealplans/${id}/`, data);
+  return response.data;
+};
 
 // Recipes
 export const fetchRecipes = async () => {
   const response = await api.get('/recipes/');
   return response.data;
+};
+
+export const fetchRecipeDetails = async (id) => {
+  try {
+    const response = await api.get(`/recipes/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching recipe details:', error);
+    throw error;
+  }
 };
 
 export const createRecipe = async (data) => {
@@ -102,7 +131,7 @@ export const createRecipe = async (data) => {
 
 // Integrations
 export const searchSpoonacular = async (query) => {
-  const response = await api.get(`/integrations/spoonacular/search/?query=${query}/`);
+  const response = await api.get(`/integrations/spoonacular/search/?query=${encodeURIComponent(query)}`);
   return response.data;
 };
 
@@ -114,6 +143,15 @@ export const analyzeNutritionix = async (foodText) => {
 export const fetchIngredients = async () => {
   const response = await api.get('/recipes/ingredients/');
   return response.data;
+};
+
+export const addIngredient = async (data) => {
+  try {
+    const response = await api.post('/recipes/ingredients/', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const createIngredient = async (data) => {

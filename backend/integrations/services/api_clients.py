@@ -1,5 +1,6 @@
 import requests
 from django.conf import settings
+import logging
 
 def fetch_recipes_from_spoonacular(query):
     # Example: complex search endpoint
@@ -13,16 +14,23 @@ def fetch_recipes_from_spoonacular(query):
     response.raise_for_status()
     return response.json()
 
-def fetch_random_spoonacular_recipes(count=3):
+def fetch_random_spoonacular_recipes(count=3, tags=None):
     url = "https://api.spoonacular.com/recipes/random"
     params = {
         "number": count,
-        "apiKey": settings.SPOONACULAR_API_KEY
+        "apiKey": settings.SPOONACULAR_API_KEY,
     }
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()
-    return data.get("recipes", [])
+    if tags:
+        params["tags"] = tags
+    
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        return data.get("recipes", [])
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Spoonacular API request failed: {e}")
+        return []
 
 def fetch_ingredient_data(query):
     url = "https://trackapi.nutritionix.com/v2/natural/nutrients"

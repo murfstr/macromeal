@@ -1,14 +1,17 @@
+// src/pages/RecipesPage.jsx
 import React, { useEffect, useState } from 'react';
 import NavBar from '../components/NavBar';
-import RecipeCard from '../components/RecipeCard'; // Import the RecipeCard component
+import RecipeCard from '../components/RecipeCard';
 import {
   fetchRecipes,
   createRecipe,
   addIngredientByName,
   fetchIngredients,
   deleteIngredient,
-  deleteRecipe, // Import the deleteRecipe function
+  deleteRecipe,
 } from '../services/api';
+import { toast } from 'react-toastify';
+import { Button, Form, Container, Row, Col, ListGroup, InputGroup, Card} from 'react-bootstrap';
 
 function RecipesPage() {
   const [recipes, setRecipes] = useState([]);
@@ -28,7 +31,7 @@ function RecipesPage() {
         setIngredients(iData);
       } catch (error) {
         console.error('Error loading data:', error);
-        alert('Failed to load recipes or ingredients.');
+        toast.error('Failed to load recipes or ingredients.');
       }
     }
     loadData();
@@ -37,16 +40,17 @@ function RecipesPage() {
   // Handle adding an ingredient via Nutritionix
   const handleAddIngredientFromNutritionix = async () => {
     if (!ingredientNameSearch.trim()) {
-      alert('Enter an ingredient name');
+      toast.error('Enter an ingredient name');
       return;
     }
     try {
       const newIng = await addIngredientByName(ingredientNameSearch);
       setIngredients((prev) => [...prev, newIng]);
+      toast.success('Ingredient added successfully!');
       setIngredientNameSearch('');
     } catch (error) {
       console.error(error);
-      alert('Error fetching ingredient');
+      toast.error('Error fetching ingredient');
     }
   };
 
@@ -59,7 +63,7 @@ function RecipesPage() {
   const handleAddIngredientToRecipe = (ingredientId) => {
     const quantity = quantities[ingredientId]?.trim();
     if (!quantity) {
-      alert('Please enter a quantity.');
+      toast.error('Please enter a quantity.');
       return;
     }
 
@@ -67,9 +71,7 @@ function RecipesPage() {
       (sel) => sel.ingredient_id === ingredientId
     );
     if (alreadySelected) {
-      alert(
-        'This ingredient is already in the recipe. Remove it first if you want to change the quantity.'
-      );
+      toast.error('This ingredient is already in the recipe. Remove it first if you want to change the quantity.');
       return;
     }
 
@@ -82,6 +84,7 @@ function RecipesPage() {
 
   // Delete an ingredient from the database
   const handleDeleteIngredient = async (ingredientId) => {
+    if (!window.confirm('Really delete this ingredient?')) return;
     try {
       await deleteIngredient(ingredientId);
       setIngredients((prev) => prev.filter((ing) => ing.id !== ingredientId));
@@ -93,9 +96,10 @@ function RecipesPage() {
         delete newQ[ingredientId];
         return newQ;
       });
+      toast.success('Ingredient deleted successfully!');
     } catch (error) {
       console.error(error);
-      alert('Failed to delete ingredient');
+      toast.error('Failed to delete ingredient');
     }
   };
 
@@ -112,22 +116,23 @@ function RecipesPage() {
       return;
     }
     try {
-      await deleteRecipe(recipeId); // calls the deleteRecipe API function
-      setRecipes((prev) => prev.filter((r) => r.id !== recipeId)); // remove from local state
+      await deleteRecipe(recipeId);
+      setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
+      toast.success('Recipe deleted successfully!');
     } catch (error) {
       console.error('Error deleting recipe:', error);
-      alert('Failed to delete recipe');
+      toast.error('Failed to delete recipe');
     }
   };
 
   // Handle creation of a new recipe
   const handleCreateRecipe = async () => {
     if (!name.trim()) {
-      alert('Please enter a recipe name.');
+      toast.error('Please enter a recipe name.');
       return;
     }
     if (selectedIngredients.length === 0) {
-      alert('Please add at least one ingredient.');
+      toast.error('Please add at least one ingredient.');
       return;
     }
 
@@ -139,6 +144,7 @@ function RecipesPage() {
     try {
       const newRecipe = await createRecipe(data);
       setRecipes((prev) => [...prev, newRecipe]);
+      toast.success('Recipe created successfully!');
       // Reset form
       setName('');
       setDescription('');
@@ -146,7 +152,11 @@ function RecipesPage() {
       setQuantities({});
     } catch (error) {
       console.error(error);
-      alert('Error creating recipe');
+      if (error.response && error.response.data) {
+        toast.error(`Error creating recipe: ${JSON.stringify(error.response.data)}`);
+      } else {
+        toast.error('Error creating recipe');
+      }
     }
   };
 
@@ -185,89 +195,95 @@ function RecipesPage() {
 
         <hr />
         <h2>Create a New Recipe</h2>
-        <div className="mb-3">
-          <label className="form-label">Recipe Name</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Recipe Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Description</label>
-          <textarea
-            className="form-control"
-            placeholder="Recipe Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
+        <Form>
+          <Form.Group className="mb-3" controlId="recipeName">
+            <Form.Label>Recipe Name</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Recipe Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3" controlId="recipeDescription">
+            <Form.Label>Description</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              placeholder="Recipe Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </Form.Group>
 
-        <h3>Available Ingredients</h3>
-        <div className="row">
-          {ingredients.map((i) => {
-            const quantityValue = quantities[i.id] || '';
-            return (
-              <div className="col-md-4 mb-3" key={i.id}>
-                <div className="card">
-                  <div className="card-body">
-                    <h5 className="card-title">
-                      {i.name} ({i.calories} cal)
-                    </h5>
-                    <input
-                      type="text"
-                      className="form-control mb-2"
-                      placeholder="Quantity (e.g. 200g)"
-                      value={quantityValue}
-                      onChange={(e) => handleQuantityChange(i.id, e.target.value)}
-                    />
-                    <button
-                      className="btn btn-primary btn-sm me-2"
-                      onClick={() => handleAddIngredientToRecipe(i.id)}
-                    >
-                      Add to Recipe
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDeleteIngredient(i.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <h3>Selected Ingredients</h3>
-        {selectedIngredients.length > 0 ? (
-          <ul className="list-group mb-3">
-            {selectedIngredients.map((sel) => {
-              const ing = ingredients.find((ing) => ing.id === sel.ingredient_id);
-              if (!ing) return null;
+          <h3>Available Ingredients</h3>
+          <Row>
+            {ingredients.map((i) => {
+              const quantityValue = quantities[i.id] || '';
               return (
-                <li key={sel.ingredient_id} className="list-group-item d-flex justify-content-between align-items-center">
-                  {ing.name} - {sel.quantity}
-                  <button
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={() => handleRemoveSelectedIngredient(sel.ingredient_id)}
-                  >
-                    Remove
-                  </button>
-                </li>
+                <Col md={4} className="mb-3" key={i.id}>
+                  <Card>
+                    <Card.Body>
+                      <Card.Title>
+                        {i.name} ({i.calories} cal)
+                      </Card.Title>
+                      <Form.Control
+                        type="text"
+                        className="mb-2"
+                        placeholder="Quantity (e.g. 200g)"
+                        value={quantityValue}
+                        onChange={(e) => handleQuantityChange(i.id, e.target.value)}
+                      />
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleAddIngredientToRecipe(i.id)}
+                      >
+                        Add to Recipe
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeleteIngredient(i.id)}
+                      >
+                        Remove
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
               );
             })}
-          </ul>
-        ) : (
-          <p>No ingredients selected.</p>
-        )}
+          </Row>
 
-        <button className="btn btn-success" onClick={handleCreateRecipe}>
-          Create Recipe
-        </button>
+          <h3>Selected Ingredients</h3>
+          {selectedIngredients.length > 0 ? (
+            <ListGroup className="mb-3">
+              {selectedIngredients.map((sel) => {
+                const ing = ingredients.find((ing) => ing.id === sel.ingredient_id);
+                if (!ing) return null;
+                return (
+                  <ListGroup.Item key={sel.ingredient_id} className="d-flex justify-content-between align-items-center">
+                    {ing.name} - {sel.quantity}
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleRemoveSelectedIngredient(sel.ingredient_id)}
+                    >
+                      Remove
+                    </Button>
+                  </ListGroup.Item>
+                );
+              })}
+            </ListGroup>
+          ) : (
+            <p>No ingredients selected.</p>
+          )}
+
+          <Button variant="success" onClick={handleCreateRecipe}>
+            Create Recipe
+          </Button>
+        </Form>
       </div>
     </div>
   );

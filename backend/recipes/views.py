@@ -15,6 +15,9 @@ from rest_framework.status import (
 from .models import Recipe, Ingredient
 from .serializers import RecipeSerializer, IngredientSerializer
 from integrations.services.api_clients import fetch_ingredient_data
+import logging
+
+logger = logging.getLogger(__name__)
 
 @api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication])
@@ -86,15 +89,29 @@ def delete_ingredient(request, pk):
 def add_ingredient_by_name(request):
     name = request.data.get('name')
     if not name:
+        logger.error("No ingredient name provided in the request.")
         return Response({"detail": "No ingredient name provided."}, status=HTTP_400_BAD_REQUEST)
     try:
         nutri_data = fetch_ingredient_data(name)
+        if not nutri_data.get('foods'):
+            logger.error(f"No foods found for the ingredient name: {name}")
+            return Response({"detail": "No foods found for the provided name."}, status=HTTP_400_BAD_REQUEST)
+        
         food = nutri_data['foods'][0]
-        ingredient_obj, _ = Ingredient.objects.get_or_create(name=food['food_name'], user=request.user)
-        ingredient_obj.calories = int(food.get('nf_calories', 0))
+        ingredient_name = food.get('food_name')
+        calories = food.get('nf_calories', 0)
+        
+        if not ingredient_name:
+            logger.error(f"No 'food_name' found in Nutritionix response for: {name}")
+            return Response({"detail": "Invalid ingredient data received from Nutritionix."}, status=HTTP_400_BAD_REQUEST)
+        
+        # Create or get the Ingredient object
+        ingredient_obj, created = Ingredient.objects.get_or_create(name=ingredient_name, user=request.user)
+        ingredient_obj.calories = int(calories)
         ingredient_obj.save()
 
         serializer = IngredientSerializer(ingredient_obj)
         return Response(serializer.data, status=HTTP_201_CREATED)
     except Exception as e:
+        logger.exception(f"Error adding ingredient by name: {name}")
         return Response({"error": str(e)}, status=HTTP_400_BAD_REQUEST)

@@ -69,11 +69,6 @@ def mealplans_detail(request, pk):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def random_mealplan(request):
-    """
-    Generate a random meal plan with one breakfast, one lunch, and one dinner.
-    Endpoint: POST /api/v1/mealplans/random/
-    Body (optional): {}
-    """
     try:
         # Define meal types
         meal_types = ['breakfast', 'lunch', 'dinner']
@@ -141,10 +136,6 @@ def random_mealplan(request):
         )
 
 def calculate_calories(recipe_data):
-    """
-    Extract and calculate calories from the recipe data.
-    Adjust this function based on Spoonacular's response structure.
-    """
     nutrition = recipe_data.get('nutrition', {})
     calories = 0
     # Spoonacular may provide calories in different ways; adjust accordingly
@@ -156,10 +147,6 @@ def calculate_calories(recipe_data):
     return int(calories)
 
 def get_next_available_date(mealplan):
-    """
-    Determine the next available date for the meal plan day.
-    For simplicity, assign today if no days exist, else the next day after the latest.
-    """
     if mealplan.days.exists():
         last_day = mealplan.days.order_by('-date').first()
         return last_day.date + timedelta(days=1)

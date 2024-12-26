@@ -50,7 +50,13 @@ function RecipesPage() {
       setIngredientNameSearch('');
     } catch (error) {
       console.error(error);
-      toast.error('Error fetching ingredient');
+      if (error.response && error.response.data) {
+        // Display detailed error messages from the backend
+        const errorMsg = error.response.data.detail || error.response.data.error || JSON.stringify(error.response.data);
+        toast.error(`Error adding ingredient: ${errorMsg}`);
+      } else {
+        toast.error('Error adding ingredient');
+      }
     }
   };
 
